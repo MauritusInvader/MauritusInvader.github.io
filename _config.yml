@@ -1,0 +1,6 @@
+title: My GitHub Page
+description: A simple GitHub Pages site
+author: MauritusInvader
+theme: jekyll-theme-minimal
+plugins:
+  - jekyll-feed
