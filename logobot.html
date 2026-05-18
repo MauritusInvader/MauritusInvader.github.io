@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOGO·BOT — Learn · Build · Move</title>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;900&display=swap');
+
+/* ─── PIXEL ART CSS RESET & VARS ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; image-rendering: pixelated; }
+
+:root {
+  --sky:    #1a1c2c;
+  --navy:   #29366f;
+  --purple: #3b5dc9;
+  --blue:   #41a6f6;
+  --teal:   #73eff7;
+  --green:  #94b0c2;
+  --lime:   #38b764;
+  --yellow: #ffcd75;
+  --orange: #f4793a;
+  --pink:   #ff77a8;
+  --red:    #b13e53;
+  --cream:  #f4f4f4;
+  --white:  #ffffff;
+  --pixel:  2px;
+  --font-px: 'Press Start 2P', monospace;
+  --font-ui: 'Nunito', sans-serif;
+  --shadow-px: 4px 4px 0 #000;
+  --panel-bg: #29366f;
+  --panel-border: #41a6f6;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--sky);
+  color: var(--cream);
+  font-family: var(--font-ui);
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect x='6' y='0' width='4' height='4' fill='%2373eff7'/><rect x='0' y='6' width='4' height='4' fill='%2373eff7'/><rect x='12' y='6' width='4' height='4' fill='%2373eff7'/><rect x='6' y='12' width='4' height='4' fill='%2373eff7'/><rect x='6' y='6' width='4' height='4' fill='%23ffffff'/></svg>") 8 8, crosshair;
+}
+
+/* ─── PIXEL SCROLLBAR ─── */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--navy); }
+::-webkit-scrollbar-thumb { background: var(--purple); border: 2px solid #000; }
+
+/* ─── PIXEL BORDERS (box-shadow trick) ─── */
+.px-box {
+  box-shadow: 
+    0 -2px 0 2px #000,
+    0 2px 0 2px #000,
+    -2px 0 0 2px #000,
+    2px 0 0 2px #000,
+    inset 0 -2px 0 0 rgba(0,0,0,0.4),
+    inset 0 2px 0 0 rgba(255,255,255,0.15);
+}
+
+.px-btn {
+  font-family: var(--font-px);
+  font-size: 7px;
+  letter-spacing: 0.5px;
+  border: none;
+  cursor: pointer;
+  padding: 10px 16px;
+  transition: transform 0.08s, box-shadow 0.08s;
+  text-transform: uppercase;
+  box-shadow: 0 4px 0 #000, 0 5px 0 rgba(0,0,0,0.4);
+  position: relative;
+  top: 0;
+  display: inline-flex; align-items: center; gap: 6px;
+  line-height: 1.5;
+}
+.px-btn:hover  { transform: translateY(1px); box-shadow: 0 3px 0 #000; }
+.px-btn:active { transform: translateY(4px); box-shadow: 0 0px 0 #000; top: 4px; }
+
+.btn-green  { background: var(--lime);   color: #000; }
+.btn-blue   { background: var(--blue);   color: #000; }
+.btn-yellow { background: var(--yellow); color: #000; }
+.btn-orange { background: var(--orange); color: #000; }
+.btn-pink   { background: var(--pink);   color: #000; }
+.btn-teal   { background: var(--teal);   color: #000; }
+.btn-red    { background: var(--red);    color: #fff; }
+
+/* ─── STARS BG ─── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    radial-gradient(circle 1px at 10% 20%, rgba(255,255,255,0.6) 0, transparent 1px),
+    radial-gradient(circle 1px at 85% 15%, rgba(255,255,255,0.5) 0, transparent 1px),
+    radial-gradient(circle 1px at 40% 70%, rgba(255,255,255,0.4) 0, transparent 1px),
+    radial-gradient(circle 1px at 70% 80%, rgba(255,255,255,0.6) 0, transparent 1px),
+    radial-gradient(circle 1px at 25% 55%, rgba(255,255,255,0.3) 0, transparent 1px),
+    radial-gradient(circle 1px at 90% 50%, rgba(255,255,255,0.5) 0, transparent 1px),
+    radial-gradient(circle 1px at 55% 35%, rgba(255,255,255,0.4) 0, transparent 1px),
+    radial-gradient(circle 1px at 15% 88%, rgba(255,255,255,0.5) 0, transparent 1px),
+    radial-gradient(circle 1px at 60% 10%, rgba(255,255,255,0.6) 0, transparent 1px),
+    radial-gradient(circle 2px at 3%  40%, rgba(115,239,247,0.5) 0, transparent 2px),
+    radial-gradient(circle 2px at 97% 75%, rgba(255,205,117,0.4) 0, transparent 2px),
+    radial-gradient(circle 2px at 48% 92%, rgba(255,119,168,0.4) 0, transparent 2px);
+  pointer-events: none;
+}
+
+/* ─── NAV ─── */
+nav {
+  position: sticky; top: 0; z-index: 200;
+  background: var(--navy);
+  border-bottom: 4px solid #000;
+  padding: 0;
+  display: flex; align-items: stretch;
+}
+
+.nav-brand {
+  background: var(--purple);
+  border-right: 4px solid #000;
+  padding: 14px 22px;
+  display: flex; align-items: center; gap: 10px;
+}
+
+.nav-logo-txt {
+  font-family: var(--font-px);
+  font-size: 11px;
+  color: var(--yellow);
+  text-shadow: 2px 2px 0 #000;
+  line-height: 1.3;
+}
+.nav-logo-txt span { color: var(--teal); }
+
+.nav-tabs {
+  display: flex; align-items: stretch; flex: 1;
+}
+
+.nav-tab {
+  font-family: var(--font-px);
+  font-size: 7px;
+  color: var(--blue);
+  padding: 0 18px;
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer;
+  border-right: 2px solid rgba(0,0,0,0.3);
+  transition: background 0.1s;
+  text-decoration: none;
+  border-bottom: none; border-top: none; border-left: none;
+  background: transparent;
+}
+.nav-tab:hover, .nav-tab.active {
+  background: var(--purple);
+  color: var(--yellow);
+}
+
+.nav-right {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 0;
+}
+
+.ws-indicator {
+  padding: 0 18px;
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-px);
+  font-size: 6px;
+  color: var(--green);
+  border-left: 2px solid rgba(0,0,0,0.3);
+}
+
+.pixel-dot {
+  width: 8px; height: 8px;
+  background: #b13e53;
+  box-shadow: 2px 2px 0 #000;
+  animation: blink-dot 1.2s steps(1) infinite;
+  flex-shrink: 0;
+}
+.pixel-dot.on { background: var(--lime); animation: none; }
+@keyframes blink-dot { 50% { opacity: 0; } }
+
+/* ─── HERO ─── */
+.hero {
+  position: relative; z-index: 1;
+  padding: 48px 32px 32px;
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center;
+}
+
+.hero-badge {
+  font-family: var(--font-px);
+  font-size: 7px;
+  background: var(--orange);
+  color: #000;
+  padding: 6px 14px;
+  box-shadow: 2px 2px 0 #000;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+h1 {
+  font-family: var(--font-px);
+  font-size: clamp(18px, 4vw, 32px);
+  line-height: 1.6;
+  color: var(--white);
+  text-shadow: 3px 3px 0 #000, 6px 6px 0 var(--purple);
+  margin-bottom: 14px;
+}
+h1 .c1 { color: var(--yellow); }
+h1 .c2 { color: var(--teal); }
+h1 .c3 { color: var(--pink); }
+
+.hero-sub {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--blue);
+  max-width: 560px;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.hero-btns {
+  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+  margin-bottom: 36px;
+}
+
+/* ─── PIXEL TURTLE CHARACTER ─── */
+.turtle-char {
+  width: 80px; height: 80px;
+  image-rendering: pixelated;
+  animation: turtle-bob 1.2s ease-in-out infinite alternate;
+  filter: drop-shadow(3px 3px 0 #000);
+  margin-bottom: 8px;
+}
+@keyframes turtle-bob { from { transform: translateY(0); } to { transform: translateY(-8px) rotate(3deg); } }
+
+/* ─── MAIN LAYOUT ─── */
+.app-shell {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: 260px 1fr 260px;
+  grid-template-rows: auto;
+  gap: 0;
+  min-height: calc(100vh - 54px);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px;
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .app-shell { grid-template-columns: 220px 1fr; }
+  .panel-right { display: none; }
+}
+@media (max-width: 700px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .panel-left { display: none; }
+}
+
+/* ─── PANELS ─── */
+.panel {
+  background: var(--panel-bg);
+  border: 4px solid #000;
+  box-shadow: 4px 4px 0 #000;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+
+.panel-header {
+  background: var(--purple);
+  border-bottom: 4px solid #000;
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-px);
+  font-size: 7px;
+  color: var(--yellow);
+  text-shadow: 1px 1px 0 #000;
+  flex-shrink: 0;
+}
+
+.panel-icon { font-size: 14px; }
+
+.panel-body { padding: 12px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+
+/* ─── CANVAS AREA ─── */
+.canvas-panel {
+  background: var(--navy);
+  border: 4px solid #000;
+  box-shadow: 4px 4px 0 #000;
+  display: flex; flex-direction: column;
+}
+
+.canvas-toolbar {
+  background: var(--purple);
+  border-bottom: 4px solid #000;
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+
+.canvas-wrap {
+  flex: 1;
+  position: relative;
+  min-height: 360px;
+  display: flex; align-items: center; justify-content: center;
+  background: #0a0f1e;
+  overflow: hidden;
+}
+
+#mainCanvas {
+  display: block;
+  image-rendering: pixelated;
+  border: 2px solid var(--navy);
+}
+
+/* canvas grid overlay */
+#mainCanvas::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(65,166,246,0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(65,166,246,0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.canvas-bottom {
+  background: var(--sky);
+  border-top: 4px solid #000;
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+
+/* ─── CODE EDITOR ─── */
+.code-wrap {
+  background: #0a0f1e;
+  border: 4px solid #000;
+  flex: 1;
+  display: flex; flex-direction: column;
+}
+
+.code-header {
+  background: var(--sky);
+  border-bottom: 2px solid var(--purple);
+  padding: 6px 12px;
+  display: flex; gap: 6px; align-items: center;
+  font-family: var(--font-px); font-size: 6px; color: var(--teal);
+}
+
+#codeArea {
+  flex: 1;
+  background: #0a0f1e;
+  border: none; outline: none;
+  color: var(--lime);
+  font-family: var(--font-px);
+  font-size: 9px;
+  padding: 14px;
+  resize: none;
+  line-height: 2;
+  caret-color: var(--yellow);
+  min-height: 160px;
+}
+#codeArea::placeholder { color: var(--navy); }
+
+.code-actions {
+  border-top: 2px solid var(--purple);
+  padding: 8px;
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  background: var(--sky);
+}
+
+/* ─── LOG ─── */
+.log-box {
+  background: #050810;
+  border: 2px solid var(--navy);
+  padding: 8px 10px;
+  height: 90px;
+  overflow-y: auto;
+  font-family: var(--font-px);
+  font-size: 6px;
+  line-height: 2;
+}
+.log-ok   { color: var(--lime); }
+.log-err  { color: var(--red); }
+.log-info { color: var(--blue); }
+.log-warn { color: var(--yellow); }
+.log-data { color: var(--teal); }
+
+/* ─── LESSON CARDS ─── */
+.lesson-card {
+  background: var(--sky);
+  border: 3px solid #000;
+  box-shadow: 2px 2px 0 #000;
+  padding: 10px;
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.lesson-card:hover { transform: translate(-2px,-2px); box-shadow: 4px 4px 0 #000; }
+.lesson-card.locked { opacity: 0.5; cursor: not-allowed; }
+.lesson-card.done { border-color: var(--lime); }
+
+.lesson-num {
+  font-family: var(--font-px);
+  font-size: 6px;
+  color: var(--teal);
+  margin-bottom: 4px;
+}
+.lesson-title {
+  font-family: var(--font-px);
+  font-size: 7px;
+  color: var(--yellow);
+  margin-bottom: 4px;
+  line-height: 1.6;
+}
+.lesson-tags {
+  display: flex; gap: 4px; flex-wrap: wrap;
+}
+.tag {
+  font-family: var(--font-px);
+  font-size: 5px;
+  padding: 3px 6px;
+  border: 2px solid #000;
+}
+.tag-ax   { background: var(--pink); color: #000; }
+.tag-loop { background: var(--lime); color: #000; }
+.tag-fn   { background: var(--blue); color: #000; }
+.tag-geo  { background: var(--orange); color: #000; }
+.tag-rec  { background: var(--purple); color: #fff; }
+
+/* ─── AXIOM DISPLAY ─── */
+.axiom-box {
+  background: #050810;
+  border: 3px solid var(--teal);
+  padding: 10px;
+  font-family: var(--font-px);
+  font-size: 7px;
+  line-height: 2;
+  color: var(--teal);
+}
+.axiom-title {
+  color: var(--yellow);
+  margin-bottom: 6px;
+  font-size: 6px;
+  text-transform: uppercase;
+}
+
+/* ─── D-PAD ─── */
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 44px);
+  gap: 4px;
+  margin: 4px auto;
+  width: fit-content;
+}
+
+.dpad-btn {
+  width: 44px; height: 44px;
+  background: var(--purple);
+  border: 3px solid #000;
+  box-shadow: 2px 2px 0 #000;
+  color: var(--yellow);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.08s, box-shadow 0.08s;
+  font-family: var(--font-ui); font-weight: 900;
+}
+.dpad-btn:hover { background: var(--blue); color: #000; }
+.dpad-btn:active { transform: translate(2px,2px); box-shadow: 0 0 0 #000; }
+.dpad-btn.empty { background: transparent; border: none; box-shadow: none; pointer-events: none; }
+.dpad-btn.stop-btn { background: var(--red); font-size: 10px; font-family: var(--font-px); font-size: 6px; }
+
+/* ─── SLIDERS ─── */
+.ctrl-label {
+  font-family: var(--font-px);
+  font-size: 6px;
+  color: var(--teal);
+  display: flex; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.ctrl-label span { color: var(--yellow); }
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%; height: 8px;
+  background: var(--sky);
+  border: 2px solid #000;
+  outline: none;
+  border-radius: 0;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  background: var(--yellow);
+  border: 3px solid #000;
+  cursor: pointer;
+}
+
+/* ─── FUNCTION PLOTTER ─── */
+.fn-row {
+  display: flex; gap: 6px; align-items: center;
+}
+.fn-input {
+  flex: 1;
+  background: #050810;
+  border: 3px solid #000;
+  color: var(--lime);
+  font-family: var(--font-px);
+  font-size: 7px;
+  padding: 7px 10px;
+  outline: none;
+}
+.fn-input:focus { border-color: var(--teal); }
+
+/* ─── GESTURE OVERLAY ─── */
+#gestureOverlay {
+  position: fixed; bottom: 16px; right: 16px; z-index: 500;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+}
+
+.gesture-cam-wrap {
+  width: 160px; height: 120px;
+  border: 4px solid #000;
+  box-shadow: 4px 4px 0 #000;
+  overflow: hidden;
+  background: #000;
+  position: relative;
+  display: none;
+}
+.gesture-cam-wrap.active { display: block; }
+
+#gestureCanvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+}
+#gestureVideo {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.gesture-label {
+  font-family: var(--font-px);
+  font-size: 6px;
+  background: var(--sky);
+  border: 3px solid #000;
+  box-shadow: 2px 2px 0 #000;
+  color: var(--yellow);
+  padding: 6px 10px;
+  text-align: right;
+}
+
+/* ─── CONNECTION CARD ─── */
+.conn-input {
+  width: 100%;
+  background: #050810;
+  border: 3px solid #000;
+  color: var(--teal);
+  font-family: var(--font-px);
+  font-size: 7px;
+  padding: 7px 10px;
+  outline: none;
+  margin-bottom: 6px;
+}
+.conn-input:focus { border-color: var(--yellow); }
+
+/* ─── PIXEL PROGRESS BAR ─── */
+.progress-wrap {
+  background: #050810;
+  border: 3px solid #000;
+  height: 18px;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--lime) 0, var(--lime) 8px,
+    rgba(0,0,0,0.3) 8px, rgba(0,0,0,0.3) 10px
+  );
+  transition: width 0.4s;
+}
+.progress-txt {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-px); font-size: 6px; color: #fff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* ─── COLOR PALETTE ─── */
+.palette {
+  display: flex; gap: 4px; flex-wrap: wrap;
+}
+.swatch {
+  width: 22px; height: 22px;
+  border: 3px solid #000;
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s;
+  box-shadow: 2px 2px 0 #000;
+}
+.swatch:hover, .swatch.active { transform: scale(1.2); box-shadow: 0 0 0 3px var(--yellow), 2px 2px 0 #000; }
+
+/* ─── TABS inside panels ─── */
+.tab-bar {
+  display: flex; border-bottom: 3px solid #000;
+}
+.tab-item {
+  font-family: var(--font-px); font-size: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--blue);
+  border-right: 2px solid rgba(0,0,0,0.3);
+  background: transparent; border-top: none; border-left: none; border-bottom: none;
+}
+.tab-item.active { background: var(--sky); color: var(--yellow); }
+
+.tab-content { display: none; padding: 10px; flex-direction: column; gap: 8px; }
+.tab-content.active { display: flex; }
+
+/* ─── NOTIFICATION TOAST ─── */
+#toast {
+  position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-px); font-size: 8px;
+  background: var(--lime); color: #000;
+  border: 4px solid #000; box-shadow: 4px 4px 0 #000;
+  padding: 10px 20px;
+  z-index: 9999;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+#toast.show { opacity: 1; }
+
+/* ─── WINDSTORM QUEST BAR ─── */
+.quest-bar {
+  background: var(--orange);
+  border-bottom: 4px solid #000;
+  border-top: 4px solid #000;
+  padding: 8px 16px;
+  display: flex; align-items: center; gap: 12px;
+  position: relative; z-index: 1;
+}
+.quest-txt {
+  font-family: var(--font-px); font-size: 7px; color: #000;
+  flex: 1; line-height: 1.7;
+}
+.quest-icon { font-size: 20px; flex-shrink: 0; }
+
+/* ─── AXIOM THEOREM STEP ─── */
+.step-item {
+  background: #050810;
+  border-left: 4px solid var(--teal);
+  padding: 8px 10px;
+  font-family: var(--font-px);
+  font-size: 6px;
+  color: var(--cream);
+  line-height: 2;
+}
+.step-item .step-id { color: var(--yellow); }
+.step-item .step-why { color: var(--blue); font-size: 5px; }
+
+/* ─── ANIM ─── */
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.fade-up { animation: fadeUp 0.4s ease both; }
+
+/* pixel flicker on star elements */
+@keyframes flicker { 0%,100%{opacity:1} 92%{opacity:0.8} 95%{opacity:1} 97%{opacity:0.9} }
+.nav-logo-txt { animation: flicker 4s infinite; }
+</style>
+</head>
+<body>
+
+<!-- ─── NAV ─── -->
+<nav>
+  <div class="nav-brand">
+    <!-- Pixel turtle SVG -->
+    <svg width="32" height="32" viewBox="0 0 8 8" style="image-rendering:pixelated;margin-right:4px">
+      <rect x="2" y="1" width="4" height="1" fill="#38b764"/>
+      <rect x="1" y="2" width="6" height="3" fill="#38b764"/>
+      <rect x="0" y="3" width="1" height="1" fill="#38b764"/>
+      <rect x="7" y="3" width="1" height="1" fill="#38b764"/>
+      <rect x="1" y="5" width="2" height="1" fill="#38b764"/>
+      <rect x="5" y="5" width="2" height="1" fill="#38b764"/>
+      <rect x="2" y="2" width="1" height="1" fill="#73eff7"/>
+      <rect x="5" y="2" width="1" height="1" fill="#73eff7"/>
+      <rect x="3" y="3" width="2" height="1" fill="#ffcd75"/>
+    </svg>
+    <div class="nav-logo-txt">LOGO<span>·BOT</span><br><span style="color:#94b0c2;font-size:5px">v3 · WINDSTORM ED.</span></div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('learn')">📚 LEARN</button>
+    <button class="nav-tab" onclick="showTab('code')">⌨ CODE</button>
+    <button class="nav-tab" onclick="showTab('axioms')">∴ AXIOMS</button>
+    <button class="nav-tab" onclick="showTab('robot')">🤖 ROBOT</button>
+    <button class="nav-tab" onclick="showTab('connect')">📡 CONNECT</button>
+  </div>
+  <div class="nav-right">
+    <div class="ws-indicator">
+      <div class="pixel-dot" id="wsDot"></div>
+      <span id="wsLabel">OFFLINE</span>
+    </div>
+    <div class="ws-indicator" style="border-left:2px solid rgba(0,0,0,0.3)">
+      <div class="pixel-dot" id="gestDot"></div>
+      <span id="gestLabel">HANDS OFF</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── QUEST BAR ─── -->
+<div class="quest-bar" id="questBar">
+  <span class="quest-icon">🗺</span>
+  <div class="quest-txt" id="questTxt">
+    WELCOME, EXPLORER! Pick a LESSON on the left, write LOGO code in the editor, then hit RUN ▶ to see your turtle move. Unlock robot control once you finish 3 lessons!
+  </div>
+  <button class="px-btn btn-yellow" style="flex-shrink:0" onclick="nextQuest()">NEXT ▶</button>
+</div>
+
+<div id="toast"></div>
+
+<!-- ─── APP SHELL ─── -->
+<div class="app-shell" id="appShell">
+
+  <!-- ════ LEFT PANEL ════ -->
+  <div class="panel panel-left" style="max-height:calc(100vh - 120px);overflow:hidden;display:flex;flex-direction:column;">
+    <div class="panel-header"><span class="panel-icon">📚</span> LESSONS</div>
+    <div style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;" id="lessonList">
+      <!-- lessons injected by JS -->
+    </div>
+  </div>
+
+  <!-- ════ CENTER ════ -->
+  <div style="display:flex;flex-direction:column;gap:12px;min-width:0;">
+
+    <!-- Canvas -->
+    <div class="canvas-panel">
+      <div class="canvas-toolbar">
+        <button class="px-btn btn-green" onclick="runLOGO()">▶ RUN</button>
+        <button class="px-btn btn-yellow" onclick="clearAll()">🗑 CLEAR</button>
+        <button class="px-btn btn-blue" onclick="plotFunction()">∫ PLOT FN</button>
+        <button class="px-btn btn-pink" onclick="toggleGestures()">✋ GESTURES</button>
+        <button class="px-btn btn-teal" onclick="sendToESP()">📡 → ESP32</button>
+        <div style="margin-left:auto;font-family:var(--font-px);font-size:6px;color:var(--teal)">
+          X:<span id="tX">0</span> Y:<span id="tY">0</span> °<span id="tH">90</span>
+        </div>
+      </div>
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="mainCanvas" width="520" height="380"></canvas>
+      </div>
+      <div class="canvas-bottom">
+        <!-- color swatches -->
+        <div class="palette" id="palette"></div>
+        <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+          <label style="font-family:var(--font-px);font-size:6px;color:var(--teal)">STEP</label>
+          <input type="range" min="1" max="400" value="100" id="animSpeed" style="width:70px">
+          <button class="px-btn btn-orange" id="penToggleBtn" onclick="togglePen()">PEN ✎</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code + Log -->
+    <div class="panel" style="flex-shrink:0;">
+      <div class="tab-bar">
+        <button class="tab-item active" onclick="switchEdTab(0)">⌨ LOGO CODE</button>
+        <button class="tab-item" onclick="switchEdTab(1)">∫ FUNCTION</button>
+        <button class="tab-item" onclick="switchEdTab(2)">📋 LOG</button>
+      </div>
+
+      <div class="tab-content active" id="edTab0">
+        <div class="code-wrap">
+          <div class="code-header">
+            <span style="color:var(--lime)">●</span>
+            <span style="color:var(--yellow)">●</span>
+            <span style="color:var(--red)">●</span>
+            <span style="margin-left:8px;">program.lgo</span>
+          </div>
+          <textarea id="codeArea" rows="7" placeholder="; Write LOGO here!&#10;REPEAT 4 [&#10;  FORWARD 80&#10;  RIGHT 90&#10;]">REPEAT 4 [
+  FORWARD 80
+  RIGHT 90
+]</textarea>
+          <div class="code-actions">
+            <button class="px-btn btn-green" onclick="runLOGO()">▶ RUN</button>
+            <button class="px-btn btn-yellow" onclick="clearAll()">CLEAR</button>
+            <button class="px-btn btn-blue" onclick="loadExample('spiral')">SPIRAL</button>
+            <button class="px-btn btn-pink" onclick="loadExample('star')">STAR</button>
+            <button class="px-btn btn-teal" onclick="loadExample('tree')">TREE</button>
+            <button class="px-btn btn-orange" onclick="loadExample('snowflake')">SNOWFLAKE</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="edTab1">
+        <div style="padding:10px;display:flex;flex-direction:column;gap:8px;">
+          <div style="font-family:var(--font-px);font-size:7px;color:var(--teal)">PLOT y = f(x) with the turtle:</div>
+          <div class="fn-row">
+            <span style="font-family:var(--font-px);font-size:8px;color:var(--yellow)">y =</span>
+            <input class="fn-input" id="fnExpr" value="Math.sin(x)*50" placeholder="e.g. Math.sin(x)*50">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <div class="ctrl-label">X MIN <span id="xMinV">-6</span></div>
+              <input type="range" min="-20" max="-1" value="-6" id="xMin" oninput="document.getElementById('xMinV').textContent=this.value">
+            </div>
+            <div>
+              <div class="ctrl-label">X MAX <span id="xMaxV">6</span></div>
+              <input type="range" min="1" max="20" value="6" id="xMax" oninput="document.getElementById('xMaxV').textContent=this.value">
+            </div>
+            <div>
+              <div class="ctrl-label">SCALE <span id="scaleV">30</span></div>
+              <input type="range" min="5" max="80" value="30" id="scale" oninput="document.getElementById('scaleV').textContent=this.value">
+            </div>
+            <div>
+              <div class="ctrl-label">STEP <span id="stepV">0.1</span></div>
+              <input type="range" min="1" max="50" value="10" id="fnStep" oninput="document.getElementById('stepV').textContent=(this.value/100).toFixed(2)">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="px-btn btn-green" onclick="plotFunction()">▶ PLOT</button>
+            <button class="px-btn btn-blue" onclick="setFn('Math.sin(x)*50')">sin(x)</button>
+            <button class="px-btn btn-pink" onclick="setFn('Math.cos(x)*50')">cos(x)</button>
+            <button class="px-btn btn-yellow" onclick="setFn('x*x*2')">x²</button>
+            <button class="px-btn btn-orange" onclick="setFn('Math.sin(x)*x*8')">x·sin(x)</button>
+            <button class="px-btn btn-teal" onclick="setFn('Math.tan(x)*20')">tan(x)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="edTab2">
+        <div class="log-box" id="logBox">
+          <div class="log-info">[SYS] LOGO·BOT ready. Windstorm mode: ON</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════ RIGHT PANEL ════ -->
+  <div class="panel panel-right" style="max-height:calc(100vh - 120px);overflow:hidden;display:flex;flex-direction:column;">
+    <div class="panel-header"><span class="panel-icon">∴</span> AXIOMS & THINKING</div>
+    <div style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px;">
+
+      <!-- CURRENT AXIOM -->
+      <div class="axiom-box" id="axiomBox">
+        <div class="axiom-title">// AXIOM 1 — TURTLE AXIOMS</div>
+        <div>A1: Turtle has position (x,y)</div>
+        <div>A2: Turtle has heading θ ∈ [0°,360°)</div>
+        <div>A3: Pen has state {UP, DOWN}</div>
+        <div>A4: FORWARD d moves by (d·cosθ, d·sinθ)</div>
+        <div>A5: RIGHT α rotates θ by +α</div>
+      </div>
+
+      <div style="font-family:var(--font-px);font-size:6px;color:var(--teal)">// PROOF STEPS</div>
+      <div id="proofSteps" style="display:flex;flex-direction:column;gap:4px;"></div>
+
+      <!-- COMPUTATIONAL THINKING -->
+      <div style="background:var(--sky);border:3px solid #000;padding:10px;">
+        <div style="font-family:var(--font-px);font-size:6px;color:var(--orange);margin-bottom:6px">CT CONCEPTS</div>
+        <div style="font-family:var(--font-px);font-size:6px;color:var(--cream);line-height:2.2">
+          <div>🔷 DECOMP: Break into steps</div>
+          <div>🔶 PATTERN: Find repeats</div>
+          <div>🔵 ABSTRACT: Hide detail</div>
+          <div>🟢 ALGO: Order matters!</div>
+        </div>
+      </div>
+
+      <!-- ROBOT D-PAD -->
+      <div style="background:var(--sky);border:3px solid #000;padding:10px;">
+        <div style="font-family:var(--font-px);font-size:6px;color:var(--pink);margin-bottom:8px">🤖 ROBOT DRIVER</div>
+        <div class="dpad" id="dpad">
+          <div class="dpad-btn empty"></div>
+          <button class="dpad-btn" onclick="sendDir('F')" title="FORWARD">▲</button>
+          <div class="dpad-btn empty"></div>
+          <button class="dpad-btn" onclick="sendDir('L')" title="LEFT">◄</button>
+          <button class="dpad-btn stop-btn" onclick="sendDir('S')">STOP</button>
+          <button class="dpad-btn" onclick="sendDir('R')" title="RIGHT">►</button>
+          <div class="dpad-btn empty"></div>
+          <button class="dpad-btn" onclick="sendDir('B')" title="BACK">▼</button>
+          <div class="dpad-btn empty"></div>
+        </div>
+        <div style="margin-top:8px">
+          <div class="ctrl-label">SPEED <span id="speedV">128</span></div>
+          <input type="range" min="0" max="255" value="128" id="speedSlider"
+            oninput="document.getElementById('speedV').textContent=this.value">
+        </div>
+      </div>
+
+      <!-- PROGRESS -->
+      <div style="background:var(--sky);border:3px solid #000;padding:10px;">
+        <div style="font-family:var(--font-px);font-size:6px;color:var(--teal);margin-bottom:6px">📊 PROGRESS</div>
+        <div class="progress-wrap">
+          <div class="progress-fill" id="progressFill" style="width:0%"></div>
+          <div class="progress-txt" id="progressTxt">0 / 9</div>
+        </div>
+        <div style="font-family:var(--font-px);font-size:5px;color:var(--blue);margin-top:6px;line-height:2">
+          XP: <span id="xpVal" style="color:var(--yellow)">0</span> pts
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ─── GESTURE OVERLAY ─── -->
+<div id="gestureOverlay">
+  <div class="gesture-cam-wrap" id="camWrap">
+    <video id="gestureVideo" autoplay playsinline muted></video>
+    <canvas id="gestureCanvas"></canvas>
+  </div>
+  <div class="gesture-label" id="gestureInfo">✋ GESTURE: NONE</div>
+</div>
+
+<!-- ─── CONNECT MODAL ─── -->
+<div id="connectModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:none;align-items:center;justify-content:center;">
+  <div class="panel" style="width:460px;max-width:95vw">
+    <div class="panel-header">📡 ESP32 CONNECT</div>
+    <div class="panel-body">
+      <div style="font-family:var(--font-px);font-size:6px;color:var(--teal)">PYTHON BRIDGE URL</div>
+      <input class="conn-input" id="wsUrl" value="ws://localhost:8765">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="px-btn btn-green" onclick="connectWS()">CONNECT</button>
+        <button class="px-btn btn-red" onclick="disconnectWS()">DISCONNECT</button>
+      </div>
+
+      <div style="font-family:var(--font-px);font-size:6px;color:var(--orange);margin-bottom:6px">PYTHON BRIDGE SCRIPT:</div>
+      <div style="background:#050810;border:3px solid #000;padding:10px;font-family:var(--font-px);font-size:6px;color:var(--lime);line-height:2;overflow-x:auto;">
+# pip install websockets pyserial<br>
+# python bridge.py --port /dev/ttyUSB0<br>
+<br>
+import asyncio, websockets, serial, json, argparse<br>
+p = argparse.ArgumentParser()<br>
+p.add_argument('--port', default='/dev/ttyUSB0')<br>
+p.add_argument('--baud', type=int, default=115200)<br>
+p.add_argument('--ws', type=int, default=8765)<br>
+args = p.parse_args()<br>
+ser = serial.Serial(args.port, args.baud, timeout=1)<br>
+<br>
+async def handle(ws):<br>
+&nbsp;&nbsp;async for msg in ws:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;d = json.loads(msg)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cmd = d.get("cmd","") + "\n"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ser.write(cmd.encode())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ack = ser.readline().decode().strip()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;await ws.send(json.dumps({"ack":ack}))<br>
+<br>
+async def main():<br>
+&nbsp;&nbsp;async with websockets.serve(handle,"0.0.0.0",args.ws):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;await asyncio.Future()<br>
+<br>
+asyncio.run(main())
+      </div>
+      <button class="px-btn btn-yellow" style="margin-top:10px" onclick="hideConnect()">✕ CLOSE</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ═══════════════════════════════════════════════
+   TURTLE ENGINE
+═══════════════════════════════════════════════ */
+const canvas = document.getElementById('mainCanvas');
+const ctx    = canvas.getContext('2d');
+const CW = canvas.width, CH = canvas.height;
+const CX = CW/2, CY = CH/2;
+
+const COLORS = ['#1a1c2c','#73eff7','#38b764','#ffcd75','#f4793a','#ff77a8','#41a6f6','#b13e53','#ffffff','#94b0c2'];
+const SWATCHES = ['#73eff7','#38b764','#ffcd75','#f4793a','#ff77a8','#41a6f6','#b13e53','#ffffff','#3b5dc9','#94b0c2'];
+
+let turtle = { x:CX, y:CY, angle:0, pen:true, color: SWATCHES[0], penWidth:2 };
+let cmdCount = 0, totalDist = 0, xp = 0;
+
+function degToRad(d) { return d * Math.PI / 180; }
+
+function drawGrid() {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(65,166,246,0.08)';
+  ctx.lineWidth = 1;
+  for (let x=0; x<=CW; x+=20) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CH); ctx.stroke(); }
+  for (let y=0; y<=CH; y+=20) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CW,y); ctx.stroke(); }
+  // axes
+  ctx.strokeStyle = 'rgba(115,239,247,0.15)';
+  ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(CX,0); ctx.lineTo(CX,CH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,CY); ctx.lineTo(CW,CY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function drawTurtleSprite() {
+  const a = degToRad(turtle.angle - 90);
+  const r = 10;
+  ctx.save();
+  ctx.translate(turtle.x, turtle.y);
+  ctx.rotate(a);
+  // body
+  ctx.fillStyle = '#38b764';
+  ctx.shadowColor = '#38b764'; ctx.shadowBlur = 12;
+  // draw pixel turtle (simplified)
+  ctx.fillRect(-6,-4,12,8);
+  // head
+  ctx.fillStyle = '#73eff7';
+  ctx.fillRect(-2,-8,4,5);
+  // eyes
+  ctx.fillStyle = '#000';
+  ctx.fillRect(-1,-7,2,2);
+  // shell
+  ctx.fillStyle = '#29366f';
+  ctx.fillRect(-4,-3,8,6);
+  ctx.fillStyle = '#41a6f6';
+  ctx.fillRect(-2,-1,4,2);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+  // position readout
+  document.getElementById('tX').textContent = Math.round(turtle.x - CX);
+  document.getElementById('tY').textContent = Math.round(CY - turtle.y);
+  document.getElementById('tH').textContent = Math.round(turtle.angle);
+}
+
+function redrawScene() {
+  ctx.clearRect(0,0,CW,CH);
+  ctx.fillStyle = '#0a0f1e';
+  ctx.fillRect(0,0,CW,CH);
+  drawGrid();
+  drawTurtleSprite();
+}
+
+function tForward(dist) {
+  const rad = degToRad(turtle.angle);
+  const nx = turtle.x + dist * Math.sin(rad);
+  const ny = turtle.y - dist * Math.cos(rad);
+  if (turtle.pen) {
+    ctx.beginPath();
+    ctx.moveTo(turtle.x, turtle.y);
+    ctx.lineTo(nx, ny);
+    ctx.strokeStyle = turtle.color;
+    ctx.lineWidth = turtle.penWidth;
+    ctx.shadowColor = turtle.color; ctx.shadowBlur = 6;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+  turtle.x = nx; turtle.y = ny;
+  totalDist += Math.abs(dist);
+  updateStats();
+}
+
+function tRight(a) { turtle.angle = (turtle.angle + a + 360) % 360; }
+function tLeft(a)  { tRight(-a); }
+
+function tHome() { turtle.x = CX; turtle.y = CY; turtle.angle = 0; }
+
+function updateStats() {
+  document.getElementById('tX').textContent = Math.round(turtle.x - CX);
+  document.getElementById('tY').textContent = Math.round(CY - turtle.y);
+  document.getElementById('tH').textContent = Math.round(turtle.angle);
+}
+
+/* ═══════════════════════════════════════════════
+   LOGO PARSER
+═══════════════════════════════════════════════ */
+function tokenize(src) {
+  return src
+    .replace(/;[^\n]*/g, '')        // strip comments
+    .replace(/\[/g,' [ ')
+    .replace(/\]/g,' ] ')
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function runTokens(tok, start, end) {
+  let i = start;
+  while (i < end) {
+    const t = tok[i].toUpperCase();
+    if      (t==='FORWARD'||t==='FD')     { tForward(+tok[++i]); }
+    else if (t==='BACK'   ||t==='BK')     { tForward(-(+tok[++i])); }
+    else if (t==='RIGHT'  ||t==='RT')     { tRight(+tok[++i]); }
+    else if (t==='LEFT'   ||t==='LT')     { tLeft(+tok[++i]); }
+    else if (t==='PENUP'  ||t==='PU')     { turtle.pen = false; updatePenBtn(); }
+    else if (t==='PENDOWN'||t==='PD')     { turtle.pen = true;  updatePenBtn(); }
+    else if (t==='HOME')                  { tHome(); }
+    else if (t==='CLEAR'  ||t==='CS')     { clearAll(); }
+    else if (t==='SETWIDTH')              { turtle.penWidth = +tok[++i]; }
+    else if (t==='SETCOLOR'||t==='SC') {
+      const idx = +tok[++i];
+      turtle.color = COLORS[idx % COLORS.length] || SWATCHES[0];
+      setActiveSwatch(turtle.color);
+    }
+    else if (t==='SETXY') {
+      const nx = CX + (+tok[++i]);
+      const ny = CY - (+tok[++i]);
+      if (turtle.pen) {
+        ctx.beginPath(); ctx.moveTo(turtle.x,turtle.y); ctx.lineTo(nx,ny);
+        ctx.strokeStyle=turtle.color; ctx.lineWidth=turtle.penWidth; ctx.stroke();
+      }
+      turtle.x=nx; turtle.y=ny;
+    }
+    else if (t==='REPEAT') {
+      const count = Math.round(+tok[++i]);
+      i++;
+      if (tok[i]==='[') {
+        let depth=1, j=i+1;
+        while (j<tok.length && depth>0) {
+          if (tok[j]==='[') depth++;
+          else if (tok[j]===']') depth--;
+          j++;
+        }
+        for (let r=0; r<count; r++) runTokens(tok, i+1, j-1);
+        i = j-1;
+      }
+    }
+    else if (t==='IF') {
+      // basic IF [cond] [block]
+      i++; i++; // skip cond for now (advanced)
+    }
+    i++;
+  }
+}
+
+function runLOGO() {
+  const src = document.getElementById('codeArea').value;
+  clearAll();
+  try {
+    const tok = tokenize(src);
+    runTokens(tok, 0, tok.length);
+    drawTurtleSprite();
+    cmdCount++;
+    addXP(10);
+    log('ok', `[LOGO] ✓ Done! Steps: ${tok.length}`);
+    addProofStep(`EXEC "${src.split('\n')[0].trim()}"`, 'Program executed axiomatically');
+    checkLessonComplete();
+  } catch(e) {
+    log('err', '[LOGO] ✗ Error: ' + e.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   FUNCTION PLOTTER
+═══════════════════════════════════════════════ */
+function setFn(expr) {
+  document.getElementById('fnExpr').value = expr;
+  switchEdTab(1);
+}
+
+function plotFunction() {
+  const expr  = document.getElementById('fnExpr').value;
+  const xMin  = +document.getElementById('xMin').value;
+  const xMax  = +document.getElementById('xMax').value;
+  const scale = +document.getElementById('scale').value;
+  const step  = document.getElementById('fnStep').value / 100;
+
+  clearAll();
+  turtle.pen = false;
+  // draw axes labels
+  ctx.save();
+  ctx.font = '8px "Press Start 2P"';
+  ctx.fillStyle = 'rgba(115,239,247,0.4)';
+  ctx.fillText('x', CW-12, CY-4);
+  ctx.fillText('y', CX+4, 12);
+  ctx.restore();
+
+  try {
+    const fn = new Function('x','Math','return '+expr);
+    let first = true;
+    for (let x = xMin; x <= xMax; x += step) {
+      const y = fn(x, Math);
+      const px = CX + x * scale;
+      const py = CY - y;
+      if (first) {
+        turtle.x = px; turtle.y = py; first = false;
+        continue;
+      }
+      turtle.pen = true;
+      tForward(0); // draw segment
+      ctx.beginPath();
+      ctx.moveTo(turtle.x, turtle.y);
+      ctx.lineTo(px, py);
+      ctx.strokeStyle = turtle.color;
+      ctx.lineWidth = 2;
+      ctx.shadowColor = turtle.color; ctx.shadowBlur = 4;
+      ctx.stroke(); ctx.shadowBlur = 0;
+      turtle.x = px; turtle.y = py;
+    }
+    drawTurtleSprite();
+    log('ok', `[PLOT] ✓ y=${expr} on [${xMin},${xMax}]`);
+    addXP(15);
+    addProofStep(`PLOT y=${expr}`, 'Parametric trace: ∀x∈['+xMin+','+xMax+'], y=f(x)');
+  } catch(e) {
+    log('err','[PLOT] Bad expression: ' + e.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   CLEAR + UTILS
+═══════════════════════════════════════════════ */
+function clearAll() {
+  turtle = { x:CX, y:CY, angle:0, pen:true, color: turtle.color, penWidth:2 };
+  ctx.clearRect(0,0,CW,CH);
+  ctx.fillStyle = '#0a0f1e'; ctx.fillRect(0,0,CW,CH);
+  drawGrid();
+  drawTurtleSprite();
+}
+
+function togglePen() {
+  turtle.pen = !turtle.pen;
+  updatePenBtn();
+  log('info','[TURTLE] Pen ' + (turtle.pen?'DOWN ✎':'UP ↑'));
+}
+function updatePenBtn() {
+  document.getElementById('penToggleBtn').textContent = turtle.pen ? 'PEN ✎ ON' : 'PEN ↑ OFF';
+}
+
+/* ═══════════════════════════════════════════════
+   PALETTE
+═══════════════════════════════════════════════ */
+function buildPalette() {
+  const p = document.getElementById('palette');
+  SWATCHES.forEach((c,i) => {
+    const s = document.createElement('div');
+    s.className = 'swatch' + (i===0?' active':'');
+    s.style.background = c;
+    s.title = c;
+    s.onclick = () => { turtle.color = c; setActiveSwatch(c); };
+    p.appendChild(s);
+  });
+}
+function setActiveSwatch(c) {
+  document.querySelectorAll('.swatch').forEach(s => {
+    s.classList.toggle('active', s.style.background === c || s.style.backgroundColor === c);
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   EXAMPLES
+═══════════════════════════════════════════════ */
+const EXAMPLES = {
+  spiral: `; Spiral — pattern + loop
+REPEAT 36 [
+  FORWARD 10
+  RIGHT 91
+  SETCOLOR 2
+]`,
+  star: `; 5-point star — axiom: exterior angles
+REPEAT 5 [
+  FORWARD 100
+  RIGHT 144
+]`,
+  tree: `; Recursive feel — fractal branch
+SETWIDTH 3
+REPEAT 8 [
+  FORWARD 20
+  RIGHT 10
+  SETCOLOR 2
+]
+REPEAT 8 [
+  FORWARD 20
+  LEFT 10
+  SETCOLOR 4
+]`,
+  snowflake: `; Koch-like snowflake
+REPEAT 6 [
+  REPEAT 3 [
+    FORWARD 60
+    RIGHT 120
+  ]
+  RIGHT 60
+]`
+};
+
+function loadExample(name) {
+  document.getElementById('codeArea').value = EXAMPLES[name] || '';
+  switchEdTab(0);
+  toast('📋 Example loaded: ' + name.toUpperCase());
+}
+
+/* ═══════════════════════════════════════════════
+   LESSONS — WINDSTORM / PAPERT MODEL
+   Constructionist: learn by making tangible artifacts
+═══════════════════════════════════════════════ */
+const LESSONS = [
+  {
+    id:1, title:'Hello Turtle!\nFORWARD & BACK',
+    tags:['ax','loop'],
+    concept:'A2 + A4: Position changes by (d·cosθ, d·sinθ)',
+    quest:'Make the turtle draw a straight line of 100 units.',
+    axiom:'A4: FORWARD d → position += d × direction',
+    code:'FORWARD 100',
+    done:false
+  },
+  {
+    id:2, title:'Turn & Spin\nANGLES',
+    tags:['ax','geo'],
+    concept:'A5: Heading changes. Exterior angle theorem!',
+    quest:'Turn the turtle 90° right, then go forward again.',
+    axiom:'A5: RIGHT α → θ := (θ + α) mod 360',
+    code:'FORWARD 80\nRIGHT 90\nFORWARD 80',
+    done:false
+  },
+  {
+    id:3, title:'Squares & REPEAT\nLOOPS',
+    tags:['loop','ax'],
+    concept:'REPEAT is algorithmic abstraction of repetition.',
+    quest:'Draw a square using REPEAT 4.',
+    axiom:'REPEAT n [block] ≡ n sequential executions',
+    code:'REPEAT 4 [\n  FORWARD 80\n  RIGHT 90\n]',
+    done:false
+  },
+  {
+    id:4, title:'The Angle Rule\nPOLYGONS',
+    tags:['geo','ax'],
+    concept:'Sum of exterior angles = 360°. Proof by turtle!',
+    quest:'Draw a triangle, pentagon, hexagon.',
+    axiom:'∀n: REPEAT n [FD s, RT 360/n] → n-gon',
+    code:'; Triangle\nREPEAT 3 [\n  FORWARD 80\n  RIGHT 120\n]\n; Hexagon\nPENUP\nFORWARD 120\nPENDOWN\nREPEAT 6 [\n  FORWARD 50\n  RIGHT 60\n]',
+    done:false
+  },
+  {
+    id:5, title:'Spirals\nGROWING LOOPS',
+    tags:['loop','fn'],
+    concept:'Variable step size creates emergent complexity.',
+    quest:'Make a spiral that grows larger each loop.',
+    axiom:'∃ pattern: step(n) = n → spiral emerges',
+    code:'; Archimedean spiral\nREPEAT 36 [\n  FORWARD 5\n  RIGHT 10\n  SETWIDTH 1\n]',
+    done:false
+  },
+  {
+    id:6, title:'Colors & State\nPEN CONTROL',
+    tags:['ax'],
+    concept:'Pen is a state machine: {UP, DOWN} × color × width',
+    quest:'Draw 3 shapes in 3 different colors.',
+    axiom:'State machine: (pen, color) → (pen\', color\')',
+    code:'SETCOLOR 1\nREPEAT 4 [FORWARD 60 RIGHT 90]\nPENUP\nFORWARD 80\nPENDOWN\nSETCOLOR 4\nREPEAT 3 [FORWARD 60 RIGHT 120]',
+    done:false
+  },
+  {
+    id:7, title:'Plot sin(x)\nFUNCTIONS',
+    tags:['fn','ax'],
+    concept:'Functions map inputs → outputs. Turtle traces the graph!',
+    quest:'Switch to the FUNCTION tab and plot y = sin(x)×50',
+    axiom:'∀x: y=f(x) → turtle traces parametric curve',
+    code:'',
+    done:false
+  },
+  {
+    id:8, title:'Axiom System\nFORMAL PROOFS',
+    tags:['ax','rec'],
+    concept:'A set of axioms + rules of inference → theorems',
+    quest:'Prove: REPEAT 4 [FD 80, RT 90] draws a square.',
+    axiom:'Thm: ∑ exterior angles = 4×90° = 360° ✓ square',
+    code:'; Formal: prove square closes\nREPEAT 4 [\n  FORWARD 80\n  RIGHT 90\n]',
+    done:false
+  },
+  {
+    id:9, title:'ROBOT TIME!\nSend to ESP32',
+    tags:['fn','loop'],
+    concept:'Code controls real hardware. Abstraction → action!',
+    quest:'Connect the robot and send a program via the ESP button.',
+    axiom:'Program → Compiler → MCU → Motors → World',
+    code:'REPEAT 4 [\n  FORWARD 100\n  RIGHT 90\n]',
+    done:false
+  }
+];
+
+let completedLessons = 0;
+let currentLesson = null;
+
+function buildLessons() {
+  const list = document.getElementById('lessonList');
+  list.innerHTML = '';
+  LESSONS.forEach((l,i) => {
+    const card = document.createElement('div');
+    card.className = 'lesson-card fade-up' + (l.done?' done':'') + (i>completedLessons+1?' locked':'');
+    card.style.animationDelay = (i*0.05)+'s';
+    card.innerHTML = `
+      <div class="lesson-num">LESSON ${l.id} ${l.done?'✓':''}</div>
+      <div class="lesson-title">${l.title.replace('\n','<br>')}</div>
+      <div class="lesson-tags">
+        ${l.tags.map(t=>`<span class="tag tag-${t}">${t.toUpperCase()}</span>`).join('')}
+      </div>
+    `;
+    if (i <= completedLessons + 1) {
+      card.onclick = () => loadLesson(i);
+    }
+    list.appendChild(card);
+  });
+}
+
+function loadLesson(idx) {
+  const l = LESSONS[idx];
+  currentLesson = idx;
+  document.getElementById('questTxt').textContent =
+    `LESSON ${l.id}: ${l.quest}`;
+  document.getElementById('axiomBox').innerHTML = `
+    <div class="axiom-title">// LESSON ${l.id} — ${l.concept}</div>
+    <div>${l.axiom}</div>
+  `;
+  if (l.code) {
+    document.getElementById('codeArea').value = l.code;
+    switchEdTab(0);
+  } else {
+    switchEdTab(1);
+  }
+  toast('📚 Lesson ' + l.id + ' loaded!');
+  log('info', `[LESSON] "${l.title.replace(/\n/,' — ')}"`);
+}
+
+function checkLessonComplete() {
+  if (currentLesson !== null && !LESSONS[currentLesson].done) {
+    LESSONS[currentLesson].done = true;
+    completedLessons = Math.min(completedLessons + 1, LESSONS.length - 1);
+    addXP(50);
+    updateProgress();
+    buildLessons();
+    toast('🏆 LESSON COMPLETE! +50 XP');
+  }
+}
+
+function updateProgress() {
+  const done = LESSONS.filter(l=>l.done).length;
+  const pct = done / LESSONS.length * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressTxt').textContent = done + ' / ' + LESSONS.length;
+}
+
+/* ═══════════════════════════════════════════════
+   PROOF STEPS
+═══════════════════════════════════════════════ */
+let proofN = 0;
+function addProofStep(stmt, reason) {
+  proofN++;
+  const box = document.getElementById('proofSteps');
+  const el = document.createElement('div');
+  el.className = 'step-item';
+  el.innerHTML = `<span class="step-id">P${proofN}.</span> ${stmt}<br><span class="step-why">∴ ${reason}</span>`;
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+  if (box.children.length > 8) box.removeChild(box.firstChild);
+}
+
+/* ═══════════════════════════════════════════════
+   XP / PROGRESS
+═══════════════════════════════════════════════ */
+function addXP(n) {
+  xp += n;
+  document.getElementById('xpVal').textContent = xp;
+}
+
+/* ═══════════════════════════════════════════════
+   QUESTS
+═══════════════════════════════════════════════ */
+const QUESTS = [
+  'Welcome! Draw your first shape with FORWARD and RIGHT.',
+  'Try REPEAT to make a loop — computers love patterns!',
+  'Sum of exterior angles = 360°. Prove it with polygons!',
+  'Functions map inputs to outputs. Plot y = sin(x) in the FN tab!',
+  'Axioms are rules everything else is built from. Check the AXIOMS panel!',
+  'Connect your robot in the CONNECT tab and send a program!',
+  'Gestures: click GESTURES and point your index finger to steer!',
+  'Recursion: REPEAT inside REPEAT = fractal magic!',
+  'You\'re a computational thinker now! 🏆 Keep exploring!'
+];
+let questIdx = 0;
+function nextQuest() {
+  questIdx = (questIdx+1) % QUESTS.length;
+  document.getElementById('questTxt').textContent = QUESTS[questIdx];
+}
+
+/* ═══════════════════════════════════════════════
+   TAB SYSTEM
+═══════════════════════════════════════════════ */
+function showTab(name) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  if (name==='connect') { showConnect(); }
+  if (name==='axioms') { showAxiomsPanel(); }
+}
+
+let edTabIdx = 0;
+function switchEdTab(n) {
+  edTabIdx = n;
+  document.querySelectorAll('.tab-item').forEach((t,i)=>t.classList.toggle('active',i===n));
+  document.querySelectorAll('.tab-content').forEach((c,i)=>c.classList.toggle('active',i===n));
+}
+
+function showAxiomsPanel() {
+  document.getElementById('axiomBox').innerHTML = `
+    <div class="axiom-title">// TURTLE AXIOM SYSTEM</div>
+    <div>A1: State = (x, y, θ, pen, color)</div>
+    <div>A2: FORWARD d: x+=d·sin(θ), y-=d·cos(θ)</div>
+    <div>A3: RIGHT α: θ := (θ+α) mod 360</div>
+    <div>A4: LEFT α ≡ RIGHT(-α)</div>
+    <div>A5: BACK d ≡ FORWARD(-d)</div>
+    <div>A6: REPEAT n [B] ≡ B; B; … (n times)</div>
+    <div>A7: Pen∈{UP,DOWN}: UP→no trace, DOWN→trace</div>
+    <div style="margin-top:6px;color:var(--yellow)">// COMPUTATIONAL THINKING</div>
+    <div>CT1: Decomposition — break into primitives</div>
+    <div>CT2: Pattern — REPEAT abstracts repetition</div>
+    <div>CT3: Abstraction — ignore irrelevant detail</div>
+    <div>CT4: Algorithm — order of steps matters!</div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════
+   CONNECT / WEBSOCKET
+═══════════════════════════════════════════════ */
+let ws = null;
+
+function showConnect() {
+  const m = document.getElementById('connectModal');
+  m.style.display = 'flex';
+}
+function hideConnect() {
+  document.getElementById('connectModal').style.display = 'none';
+}
+
+function connectWS() {
+  const url = document.getElementById('wsUrl').value.trim();
+  if (ws) ws.close();
+  try {
+    ws = new WebSocket(url);
+    ws.onopen  = () => { setWS(true);  log('ok',  '[WS] Connected to ' + url); };
+    ws.onclose = () => { setWS(false); log('warn','[WS] Disconnected.'); ws=null; };
+    ws.onerror = ()  => { log('err','[WS] Error. Is bridge.py running?'); };
+    ws.onmessage = e => {
+      try {
+        const d = JSON.parse(e.data);
+        if (d.ack) log('data','[ACK] ' + JSON.stringify(d));
+      } catch(_) { log('data','[WS] ← '+e.data); }
+    };
+  } catch(e) { log('err','[WS] Bad URL: '+e.message); }
+}
+
+function disconnectWS() {
+  if (ws) ws.close();
+}
+
+function setWS(on) {
+  document.getElementById('wsDot').className   = 'pixel-dot'+(on?' on':'');
+  document.getElementById('wsLabel').textContent = on?'ONLINE':'OFFLINE';
+}
+
+function sendWS(obj) {
+  if (!ws || ws.readyState!==1) { log('err','[WS] Not connected!'); return false; }
+  ws.send(JSON.stringify(obj));
+  return true;
+}
+
+/* ═══════════════════════════════════════════════
+   ROBOT CONTROL
+═══════════════════════════════════════════════ */
+const DIR = {F:'FORWARD',B:'BACK',L:'LEFT',R:'RIGHT',S:'STOP'};
+
+function sendDir(dir) {
+  const speed = document.getElementById('speedSlider').value;
+  const cmd = dir==='S' ? 'STOP' :
+              (dir==='L'||dir==='R') ? `${DIR[dir]} 90` :
+              `${DIR[dir]} ${speed}`;
+  sendWS({cmd});
+  log('info','[CMD] → '+cmd);
+  // mirror on canvas
+  if (dir==='F') { tForward(20); drawTurtleSprite(); }
+  if (dir==='B') { tForward(-20); drawTurtleSprite(); }
+  if (dir==='L') { tLeft(90); drawTurtleSprite(); }
+  if (dir==='R') { tRight(90); drawTurtleSprite(); }
+}
+
+function sendToESP() {
+  const src = document.getElementById('codeArea').value.trim();
+  if (!src) { log('warn','[ESP] Editor empty!'); return; }
+  const ok = sendWS({logo: src});
+  if (ok) { log('ok','[ESP] Program sent to robot!'); addXP(20); }
+}
+
+/* ═══════════════════════════════════════════════
+   MEDIAPIPE HANDS — GESTURE CONTROL
+   21-landmark hand model (Google)
+═══════════════════════════════════════════════ */
+let gesturesActive = false;
+let handsModel = null;
+let gestureCamera = null;
+let lastGesture = '';
+let gestCooldown = 0;
+
+// Landmark indices
+const LM = {
+  WRIST:0, THUMB_TIP:4, INDEX_TIP:8, MIDDLE_TIP:12,
+  RING_TIP:16, PINKY_TIP:20,
+  INDEX_PIP:6, MIDDLE_PIP:10, RING_PIP:14, PINKY_PIP:18,
+  THUMB_IP:3
+};
+
+function fingerExtended(lms, tipIdx, pipIdx) {
+  return lms[tipIdx].y < lms[pipIdx].y;
+}
+
+function classifyGesture(lms) {
+  const idx   = fingerExtended(lms, LM.INDEX_TIP, LM.INDEX_PIP);
+  const mid   = fingerExtended(lms, LM.MIDDLE_TIP, LM.MIDDLE_PIP);
+  const ring  = fingerExtended(lms, LM.RING_TIP, LM.RING_PIP);
+  const pinky = fingerExtended(lms, LM.PINKY_TIP, LM.PINKY_PIP);
+  const thumb = lms[LM.THUMB_TIP].x < lms[LM.THUMB_IP].x; // rough
+
+  // ✊ fist — STOP
+  if (!idx && !mid && !ring && !pinky) return 'STOP';
+  // ☝ index only — FORWARD
+  if (idx && !mid && !ring && !pinky) return 'FORWARD';
+  // ✌ index+middle — BACK
+  if (idx && mid && !ring && !pinky) return 'BACK';
+  // 🤟 index+pinky — LEFT
+  if (idx && !mid && !ring && pinky) return 'LEFT';
+  // 🖐 all 4 — RIGHT
+  if (idx && mid && ring && pinky) return 'RIGHT';
+  // 🤞 index+middle curled close — RUN
+  if (!idx && mid && !ring && !pinky) return 'RUN';
+
+  return 'NONE';
+}
+
+function onHandResults(results) {
+  const gCanvas = document.getElementById('gestureCanvas');
+  const gCtx = gCanvas.getContext('2d');
+  gCanvas.width = 160; gCanvas.height = 120;
+  gCtx.save();
+  gCtx.scale(-1,1); gCtx.translate(-160,0);
+  gCtx.drawImage(results.image, 0, 0, 160, 120);
+  gCtx.restore();
+
+  if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+    setGestLabel('NONE');
+    return;
+  }
+
+  const lms = results.multiHandLandmarks[0];
+
+  // draw skeleton
+  if (window.drawConnectors && window.HAND_CONNECTIONS) {
+    gCtx.save();
+    gCtx.scale(-1,1); gCtx.translate(-160,0);
+    drawConnectors(gCtx, lms, HAND_CONNECTIONS, {color:'#38b764', lineWidth:1});
+    drawLandmarks(gCtx, lms, {color:'#ffcd75', lineWidth:1, radius:2});
+    gCtx.restore();
+  }
+
+  const gesture = classifyGesture(lms);
+  setGestLabel(gesture);
+
+  if (Date.now() < gestCooldown) return;
+  if (gesture === lastGesture) return;
+  lastGesture = gesture;
+  gestCooldown = Date.now() + 800;
+
+  if (gesture === 'FORWARD') { sendDir('F'); toast('✋ FORWARD'); }
+  if (gesture === 'BACK')    { sendDir('B'); toast('✋ BACK'); }
+  if (gesture === 'LEFT')    { sendDir('L'); toast('✋ LEFT'); }
+  if (gesture === 'RIGHT')   { sendDir('R'); toast('✋ RIGHT'); }
+  if (gesture === 'STOP')    { sendDir('S'); toast('✋ STOP'); }
+  if (gesture === 'RUN')     { runLOGO(); toast('✋ RUN PROGRAM'); }
+}
+
+function setGestLabel(g) {
+  const icons = {FORWARD:'☝ FORWARD',BACK:'✌ BACK',LEFT:'🤟 LEFT',RIGHT:'🖐 RIGHT',STOP:'✊ STOP',RUN:'🤞 RUN',NONE:'·'};
+  document.getElementById('gestureInfo').textContent = '✋ GESTURE: '+(icons[g]||g);
+}
+
+async function toggleGestures() {
+  if (!gesturesActive) {
+    gesturesActive = true;
+    document.getElementById('camWrap').classList.add('active');
+    document.getElementById('gestDot').className = 'pixel-dot on';
+    document.getElementById('gestLabel').textContent = 'HANDS ON';
+    toast('✋ Gesture control ON! Show your hand.');
+
+    // Init MediaPipe
+    try {
+      handsModel = new Hands({locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+      handsModel.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.6
+      });
+      handsModel.onResults(onHandResults);
+
+      const video = document.getElementById('gestureVideo');
+      gestureCamera = new Camera(video, {
+        onFrame: async () => { await handsModel.send({image: video}); },
+        width: 160, height: 120
+      });
+      gestureCamera.start();
+    } catch(e) {
+      log('err','[GESTURE] MediaPipe failed: '+e.message+'. Check browser support.');
+      toast('⚠ Camera error. Allow camera access!');
+    }
+  } else {
+    gesturesActive = false;
+    document.getElementById('camWrap').classList.remove('active');
+    document.getElementById('gestDot').className = 'pixel-dot';
+    document.getElementById('gestLabel').textContent = 'HANDS OFF';
+    if (gestureCamera) gestureCamera.stop();
+    toast('✋ Gesture control OFF.');
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   LOG
+═══════════════════════════════════════════════ */
+function log(type, msg) {
+  const box = document.getElementById('logBox');
+  const el = document.createElement('div');
+  el.className = 'log-'+type;
+  el.textContent = msg;
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+  while (box.children.length > 50) box.removeChild(box.firstChild);
+}
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ═══════════════════════════════════════════════
+   KEYBOARD
+═══════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT') return;
+  if (e.key==='ArrowUp')    { sendDir('F'); e.preventDefault(); }
+  if (e.key==='ArrowDown')  { sendDir('B'); e.preventDefault(); }
+  if (e.key==='ArrowLeft')  { sendDir('L'); e.preventDefault(); }
+  if (e.key==='ArrowRight') { sendDir('R'); e.preventDefault(); }
+  if (e.key===' ')          { sendDir('S'); e.preventDefault(); }
+  if (e.key==='Enter'&&e.ctrlKey) { runLOGO(); }
+});
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+buildPalette();
+buildLessons();
+clearAll();
+
+// Demo draw on load
+setTimeout(() => {
+  turtle.pen = true;
+  turtle.color = '#73eff7';
+  const tok = tokenize('REPEAT 6 [FORWARD 50 RIGHT 60]');
+  runTokens(tok, 0, tok.length);
+  turtle.color = '#ff77a8';
+  turtle.x = CX; turtle.y = CY; turtle.angle = 30;
+  const tok2 = tokenize('REPEAT 8 [FORWARD 40 RIGHT 45]');
+  runTokens(tok2, 0, tok2.length);
+  drawTurtleSprite();
+  log('ok','[SYS] LOGO·BOT ready! ✓ Windstorm Edition');
+  log('info','[HINT] Ctrl+Enter = RUN, Arrow keys = drive robot');
+}, 500);
+</script>
+</body>
+</html>
